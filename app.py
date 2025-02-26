@@ -575,9 +575,13 @@ def update_chart(selected_language, selected_month):
     if filtered_df.empty:
         return go.Figure()
 
+    # 准备柱状图 traces
     bar_traces = []
     error_types = ["Fluency", "Terminology", "Style", "Coherence", "Accuracy", "Consistency"]
     error_colors = ["#a65628", "#f781bf", "#999999", "#66c2a5", "#fc8d62", "#8da0cb"]
+    
+    # 新增：用一个 set 记录已经在图例中出现过的 error type
+    shown_legend_error_types = set()
     
     unique_months = filtered_df["Month"].unique()
     for month in unique_months:
@@ -585,18 +589,23 @@ def update_chart(selected_language, selected_month):
         for lang in month_df["Language"].unique():
             lang_df = month_df[month_df["Language"] == lang]
             for error_type, color in zip(error_types, error_colors):
+                # 只在某个 error_type 首次出现时显示图例，后续相同类型的柱状图不再重复显示图例
+                show_legend = error_type not in shown_legend_error_types
+
                 bar_traces.append(go.Bar(
                     name=error_type,
-                    legendgroup=error_type,  # 让相同的错误类型归为同一组
-                    showlegend=True if lang == "ZH" and month == "Sep" else False,  # 只在第一组数据中显示图例
+                    legendgroup=error_type,
+                    showlegend=show_legend,
                     x=[f"{lang}<br>{month}"],
                     y=lang_df[error_type],
                     marker=dict(color=color),
                     hoverinfo="y+name"
-                    )
-                )
-        # bar_traces.add_vline(x=5*i+4.5, line_width=1, line_dash="dash", line_color="black")
+                ))
+                
+                if show_legend:
+                    shown_legend_error_types.add(error_type)
 
+    # 准备 Penalty Score 折线图 traces
     line_traces = []
     for lang in filtered_df["Language"].unique():
         lang_df = filtered_df[filtered_df["Language"] == lang]
@@ -615,25 +624,40 @@ def update_chart(selected_language, selected_month):
             hovertemplate="%{text}"
         ))
 
-
     fig = go.Figure(data=bar_traces + line_traces)
+
+    # 维持原有的竖线逻辑
     selected_lang_count = filtered_df["Language"].unique()
     selected_month_count = filtered_df["Month"].unique()
-    vline_count = min(len(selected_lang_count),len(selected_month_count))
-    for i in range(vline_count-1) :
-        fig.add_vline(x=i*5 + 4.5, line_width=1, line_dash="dash", line_color="black")
-    # print(unique_months)
-    # print(selected_lang_count)
+    vline_count = min(len(selected_lang_count), len(selected_month_count))
+    for i in range(vline_count - 1):
+        fig.add_vline(x=i * 5 + 4.5, line_width=1, line_dash="dash", line_color="black")
+
     fig.update_layout(
-    barmode="stack",
-    title="Error Types & Penalty Score",
-    xaxis=dict(title="Month"),
-    yaxis=dict(title="Penalty"),
-    legend_title="Error Types",
-    template="plotly_white",
-    autosize=True,
-    height=600,
+        barmode="stack",
+        title="Error Types & Penalty Score",
+        xaxis=dict(title="Month"),
+        yaxis=dict(title="Penalty"),
+        legend_title="Error Types",
+        template="plotly_white",
+        autosize=True,
+        height=600,
     )
+
+    # 维持原有的宽度控制逻辑
+    if (selected_language and len(selected_language) == 1) or (selected_month and len(selected_month) == 1):
+        bar_width = 0.3
+    else:
+        unique_months_count = filtered_df["Month"].nunique()
+        if unique_months_count == 2:
+            bar_width = 0.4
+        else:
+            bar_width = None
+
+    if bar_width is not None:
+        for trace in fig.data:
+            if isinstance(trace, go.Bar):
+                trace.width = bar_width
 
     return fig
 
