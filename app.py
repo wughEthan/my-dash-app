@@ -696,7 +696,7 @@ def update_cat_tool_charts(selected_language, selected_month):
         markers=True,
         facet_col="Language",
         title="Count Metrics Trend",
-        category_orders={"Month": ["Sep", "Oct", "Nov", "Dec", "Jan"]}
+        # category_orders={"Month": ["Sep", "Oct", "Nov", "Dec", "Jan"]}
     )
     fig_counts.update_layout(legend_title_text="Metrics", template="plotly_white")
 
@@ -716,9 +716,23 @@ def update_cat_tool_charts(selected_language, selected_month):
         barmode="stack",
         facet_col="Language",
         title="Distribution of Fuzzy Match Ranges",
-        category_orders={"Month": ["Sep", "Oct", "Nov", "Dec", "Jan"]}
+        # category_orders={"Month": ["Sep", "Oct", "Nov", "Dec", "Jan"]}
     )
     fig_perc.update_layout(legend_title_text="Match Range", template="plotly_white")
+     # 新增：控制柱状图宽度
+    if (selected_language and len(selected_language) == 1) or (selected_month and len(selected_month) == 1):
+        bar_width = 0.3
+    else:
+        unique_months_count = filtered_df["Month"].nunique()
+        if unique_months_count == 2:
+            bar_width = 0.4
+        else:
+            bar_width = None
+
+    if bar_width is not None:
+        for trace in fig_perc.data:
+            if isinstance(trace, go.Bar):
+                trace.width = bar_width   
 
     # (3) Donut Charts
     donut_categories = [
