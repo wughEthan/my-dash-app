@@ -1,5 +1,6 @@
 import math
 import dash
+import dash_bootstrap_components as dbc
 from dash import dcc, html, callback, Output, Input
 import plotly.graph_objects as go
 import plotly.express as px
@@ -418,70 +419,66 @@ df_PT["Language"] = "PT"
 df_cat = pd.concat([df_ZH, df_FR, df_JA, df_ES, df_PT], ignore_index=True)
 
 # ------------------------------------------------------------------------
-#  4) Initialize Dash App with dynamic layout
+#  4) Initialize Dash App with external Bootstrap stylesheet
 # ------------------------------------------------------------------------
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.config.suppress_callback_exceptions = True
+server = app.server
 
 # ------------------------------------------------------------------------
 #  5) Define Layout for Each Dashboard
 # ------------------------------------------------------------------------
 def lqa_report_layout():
-    return html.Div(style={"padding": "20px"}, children=[
-        html.Div(style={"width": "48%", "display": "inline-block"}, children=[
-            html.Label("Select Language:", style={"font-weight": "bold"}),
-            dcc.Dropdown(
-                id="language-filter",
-                options=[{"label": lang, "value": lang} for lang in df["Language"].unique()],
-                placeholder="Select language (default all)",
-                multi=True,
-                style={"width": "100%"}
-            ),
-        ]),
-        html.Div(style={"width": "48%", "display": "inline-block"}, children=[
-            html.Label("Select Month:", style={"font-weight": "bold"}),
-            dcc.Dropdown(
-                id="month-filter",
-                options=[{"label": month, "value": month} for month in df["Month"].unique()],
-                placeholder="Select months (default all)",
-                multi=True,
-                style={"width": "100%"}
-            ),
-        ]),
-        html.Br(),
-        dcc.Graph(id="bar-line-chart", style={"margin-top": "20px"})
+    return html.Div(className="box", children=[
+        dbc.Row([
+            dbc.Col([
+                html.Label("Select Language:", className="fw-bold mb-2"),
+                dcc.Dropdown(
+                    id="language-filter",
+                    options=[{"label": lang, "value": lang} for lang in df["Language"].unique()],
+                    placeholder="Select language (default all)",
+                    multi=True
+                ),
+            ], width=6),
+            dbc.Col([
+                html.Label("Select Month:", className="fw-bold mb-2"),
+                dcc.Dropdown(
+                    id="month-filter",
+                    options=[{"label": month, "value": month} for month in df["Month"].unique()],
+                    placeholder="Select months (default all)",
+                    multi=True
+                ),
+            ], width=6)
+        ], className="mb-3"),
+        dcc.Graph(id="bar-line-chart", className="graph-margin")
     ])
 
 def cat_tool_layout():
-    return html.Div(style={"padding": "20px"}, children=[
-        html.H2("CAT Tool Analysis Dashboard", style={"margin-bottom": "20px"}),
-        html.Div(style={"width": "48%", "display": "inline-block"}, children=[
-            html.Label("Select Language:", style={"font-weight": "bold"}),
-            dcc.Dropdown(
-                id="cat-language-filter",
-                options=[{"label": lang, "value": lang} for lang in df_cat["Language"].unique()],
-                placeholder="Select language (default all)",
-                multi=True,
-                style={"width": "100%"}
-            ),
-        ]),
-        html.Div(style={"width": "48%", "display": "inline-block"}, children=[
-            html.Label("Select Month:", style={"font-weight": "bold"}),
-            dcc.Dropdown(
-                id="cat-month-filter",
-                options=[{"label": month, "value": month} for month in df_cat["Month"].unique()],
-                placeholder="Select months (default all)",
-                multi=True,
-                style={"width": "100%"}
-            ),
-        ]),
-        html.Br(),
-        # Graph 1
-        dcc.Graph(id="cat-tool-counts-chart", style={"margin-top": "20px"}),
-        # Graph 2
-        dcc.Graph(id="cat-tool-percentages-chart", style={"margin-top": "20px"}),
-        # Graph 3 (Donut Charts)
-        dcc.Graph(id="cat-tool-donut-charts", style={"margin-top": "20px"})
+    return html.Div(className="box", children=[
+        html.H2("CAT Tool Analysis Dashboard", className="section-title"),
+        dbc.Row([
+            dbc.Col([
+                html.Label("Select Language:", className="fw-bold mb-2"),
+                dcc.Dropdown(
+                    id="cat-language-filter",
+                    options=[{"label": lang, "value": lang} for lang in df_cat["Language"].unique()],
+                    placeholder="Select language (default all)",
+                    multi=True
+                )
+            ], width=6),
+            dbc.Col([
+                html.Label("Select Month:", className="fw-bold mb-2"),
+                dcc.Dropdown(
+                    id="cat-month-filter",
+                    options=[{"label": month, "value": month} for month in df_cat["Month"].unique()],
+                    placeholder="Select months (default all)",
+                    multi=True
+                )
+            ], width=6),
+        ], className="mb-3"),
+        dcc.Graph(id="cat-tool-counts-chart", className="graph-margin"),
+        dcc.Graph(id="cat-tool-percentages-chart", className="graph-margin"),
+        dcc.Graph(id="cat-tool-donut-charts", className="graph-margin")
     ])
 
 def timeline_layout():
@@ -490,53 +487,58 @@ def timeline_layout():
     all_languages = sorted(df_timeline["Language"].unique())
     all_months = sorted(df_timeline["MonthStr"].unique())
 
-    return html.Div(style={"padding": "20px"}, children=[
-        html.H2("Time Line Dashboard", style={"margin-bottom": "20px"}),
-        html.Div(style={"width": "48%", "display": "inline-block"}, children=[
-            html.Label("Select Language:", style={"font-weight": "bold"}),
-            dcc.Dropdown(
-                id="timeline-language-filter",
-                options=[{"label": lang, "value": lang} for lang in all_languages],
-                multi=True,
-                placeholder="Select language (default all)",
-                style={"width": "100%"}
+    return html.Div(className="box", children=[
+        html.H2("Time Line Dashboard", className="section-title"),
+        dbc.Row([
+            dbc.Col([
+                html.Label("Select Language:", className="fw-bold mb-2"),
+                dcc.Dropdown(
+                    id="timeline-language-filter",
+                    options=[{"label": lang, "value": lang} for lang in all_languages],
+                    multi=True,
+                    placeholder="Select language (default all)"
+                )
+            ], width=6),
+            dbc.Col([
+                html.Label("Select Month:", className="fw-bold mb-2"),
+                dcc.Dropdown(
+                    id="timeline-month-filter",
+                    options=[{"label": m, "value": m} for m in all_months],
+                    multi=True,
+                    placeholder="Select months (default all)"
+                )
+            ], width=6),
+        ], className="mb-3"),
+        # 这里统一让 Graph 占满一整行，且高度固定 900px
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(
+                    id="timeline-chart",
+                    style={"width": "100%", "height": "900px"}
+                ),
+                width=12
             )
-        ]),
-        html.Div(style={"width": "48%", "display": "inline-block"}, children=[
-            html.Label("Select Month:", style={"font-weight": "bold"}),
-            dcc.Dropdown(
-                id="timeline-month-filter",
-                options=[{"label": m, "value": m} for m in all_months],
-                multi=True,
-                placeholder="Select months (default all)",
-                style={"width": "100%"}
-            )
-        ]),
-        html.Br(),
-        dcc.Graph(id="timeline-chart", style={"margin-top": "20px"})
+        ])
     ])
 
 # Main layout with Tabs
-app.layout = html.Div(style={"font-family": "Arial, sans-serif"}, children=[
+app.layout = html.Div([
     html.H1(
         "Multilingual Translation Quality Dashboard",
-        style={"text-align": "center", "padding": "20px"}
+        className="main-title"
     ),
     dcc.Tabs(
         id="tabs",
         value="tab-lqa",
+        className="tabs-container",
         children=[
-            dcc.Tab(label="LQA Report", value="tab-lqa", 
-                    style={"font-weight": "bold", "font-size": "16px", "padding": "6px"}),
-            dcc.Tab(label="CAT Tool Analysis", value="tab-cat",
-                    style={"font-weight": "bold", "font-size": "16px", "padding": "6px"}),
-            dcc.Tab(label="Time Line Dashboard", value="tab-timeline",
-                    style={"font-weight": "bold", "font-size": "16px", "padding": "6px"})
-        ],
-        style={"margin": "0 auto", "width": "80%", "justify-content": "center"}
+            dcc.Tab(label="LQA Report", value="tab-lqa", className="tab", selected_className="tab--selected"),
+            dcc.Tab(label="CAT Tool Analysis", value="tab-cat", className="tab", selected_className="tab--selected"),
+            dcc.Tab(label="Time Line Dashboard", value="tab-timeline", className="tab", selected_className="tab--selected")
+        ]
     ),
-    html.Div(id="tabs-content", style={"margin": "0 auto", "width": "85%", "padding": "20px"})
-])
+    html.Div(id="tabs-content", className="content-area")
+], className="app-container")
 
 # ------------------------------------------------------------------------
 #  7) Callback: Render tab content
@@ -608,8 +610,6 @@ def update_chart(selected_language, selected_month):
         ))
 
     fig = go.Figure(data=bar_traces + line_traces)
-
-    # 让图表宽度自适应，不强制 width
     fig.update_layout(
         barmode="stack",
         title="Error Types & Penalty Score",
@@ -617,25 +617,23 @@ def update_chart(selected_language, selected_month):
         yaxis=dict(title="Number of Errors"),
         legend_title="Error Types",
         template="plotly_white",
-        autosize=True,       # 或者干脆不写 width/height
-        # 也可用 bargap 来控制柱子之间的空隙
-        # bargap=0.3,
+        autosize=True
     )
 
-    # 根据“剩余月份种类数量”动态设置柱子宽度
+    # 动态设置柱子宽度
     unique_months = filtered_df["Month"].nunique()
     if unique_months == 1:
-        # 如果只剩 1 个分类，让柱子尽量窄些避免横向过宽
         bar_width = 0.3
     elif unique_months == 2:
         bar_width = 0.4
     else:
-        bar_width = None  # None 时由 Plotly 默认计算
+        bar_width = None
 
     if bar_width is not None:
         for trace in fig.data:
             if isinstance(trace, go.Bar):
                 trace.width = bar_width
+
     return fig
 
 # ------------------------------------------------------------------------
@@ -673,7 +671,7 @@ def update_cat_tool_charts(selected_language, selected_month):
         markers=True,
         facet_col="Language",
         title="Count Metrics Trend",
-        category_orders={"Month": ["Sep", "Oct", "Nov", "Dec", "Jan"]}  # Ensure order
+        category_orders={"Month": ["Sep", "Oct", "Nov", "Dec", "Jan"]}
     )
     fig_counts.update_layout(legend_title_text="Metrics", template="plotly_white")
 
@@ -697,7 +695,7 @@ def update_cat_tool_charts(selected_language, selected_month):
     )
     fig_perc.update_layout(legend_title_text="Match Range", template="plotly_white")
 
-    # (3) Donut Charts for each (Language, Month) combination
+    # (3) Donut Charts
     donut_categories = [
         "Context Match", "Repetitions", "101%", "100%",
         "95%-99%", "85%-94%", "75%-84%", "50%-74%", "No Match"
@@ -791,11 +789,10 @@ def update_timeline_chart(selected_langs, selected_months):
     )
     fig.update_yaxes(autorange="reversed")
 
-    # Avoid overlapping bars:
-    fig.update_layout(barmode='group')
+    fig.update_layout(barmode='group', template="plotly_white")
     fig.update_traces(width=0.2)
 
-    # Make "Plan" more visually distinct
+    # Make "Plan" visually distinct
     for trace in fig.data:
         if trace.name == "Plan":
             trace.marker.line.width = 2
@@ -804,12 +801,13 @@ def update_timeline_chart(selected_langs, selected_months):
             trace.opacity = 1.0
 
     fig.update_layout(
+        barmode='group',
+        template='plotly_white',
         title="Timeline Comparison (Plan vs Actual)",
         xaxis_title="Date",
         yaxis_title="Tasks",
-        width=1200,
-        height=800,
-        template="plotly_white"
+        autosize=True,                 # 重要：让图表自动填充容器宽度
+        margin=dict(l=50, r=50, t=50, b=50)  # 适度留白
     )
     return fig
 

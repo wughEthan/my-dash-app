@@ -307,19 +307,20 @@ def task_in_selected_months(row, selected_months):
 data = {
     "Month": ["Sep", "Oct", "Nov", "Dec", "Jan"] * 5,
     "Language": ["ZH"] * 5 + ["FR"] * 5 + ["JA"] * 5 + ["PT"] * 5 + ["ES"] * 5,
-    "Penalty Score": [
-        16, 8, 5, 10, 6,
-        9, 9, 9, 7, 9,
-        12, 7, 9, 3, 5,
-        9, 9, 5, 8, 4,
-        2, 6, 9, 7, 6
-    ],
-    "Fluency": [3, 1, 2, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 2, 0],
-    "Terminology": [10, 5, 0, 5, 1, 2, 1, 1, 2, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 0, 2, 0, 2, 1],
-    "Style": [2, 1, 2, 1, 1, 1, 1, 2, 2, 1, 2, 1, 2, 0, 1, 1, 1, 1, 2, 1, 0, 2, 3, 2, 1],
-    "Coherence": [1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-    "Accuracy": [0, 0, 0, 1, 0, 2, 2, 1, 1, 0, 0, 0, 1, 0, 0, 2, 2, 1, 0, 1, 0, 0, 2, 0, 1],
-    "Consistency": [0, 0, 0, 2, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 0, 1, 0, 1, 2, 2, 0, 2, 0, 2]
+    "Penalty Score": 
+    [16, 8, 5, 10, 3, 9, 9, 6, 9, 5, 12, 7, 6, 10, 6, 9, 8, 5, 9, 4, 9, 7, 6, 9, 4],
+    "Fluency": 
+    [3, 1, 2, 1, 1, 0, 2, 1, 2, 1, 1, 1, 1, 0, 0, 0, 2, 0, 1, 1, 0, 1, 2, 1, 1],
+    "Terminology": 
+    [10, 5, 0, 5, 0, 5, 1, 0, 4, 0, 5, 1, 1, 8, 1, 3, 1, 1, 5, 0, 4, 1, 0, 6, 0],
+    "Style": 
+    [2, 1, 2, 1, 1, 1, 1, 2, 0, 1, 4, 4, 2, 0, 1, 3, 1, 1, 1, 1, 2, 2, 1, 0, 1],
+    "Coherence": 
+    [1, 1, 1, 0, 0, 0, 2, 0, 2, 1, 2, 0, 0, 1, 2, 0, 0, 2, 1, 0, 0, 1, 1, 0, 1],
+    "Accuracy": 
+    [0, 0, 0, 1, 0, 2, 2, 2, 0, 0, 0, 0, 1, 0, 0, 2, 2, 1, 0, 1, 1, 1, 1, 0, 1],
+    "Consistency": 
+    [0, 0, 0, 2, 1, 1, 1, 1, 1, 2, 0, 1, 1, 1, 2, 1, 2, 0, 1, 1, 2, 1, 1, 2, 0]
 }
 df = pd.DataFrame(data)
 
@@ -577,26 +578,31 @@ def update_chart(selected_language, selected_month):
     bar_traces = []
     error_types = ["Fluency", "Terminology", "Style", "Coherence", "Accuracy", "Consistency"]
     error_colors = ["#a65628", "#f781bf", "#999999", "#66c2a5", "#fc8d62", "#8da0cb"]
-    for error_type, color in zip(error_types, error_colors):
-        bar_traces.append(go.Bar(
-            name=error_type,
-            x=filtered_df["Month"],
-            y=filtered_df[error_type],
-            marker=dict(color=color),
-            hoverinfo="text",
-            hovertext=[
-                f"Language: {lang}<br>Month: {m}<br>{error_type}: {val}"
-                for lang, m, val in zip(filtered_df["Language"], filtered_df["Month"], filtered_df[error_type])
-            ],
-            hovertemplate="%{hovertext}"
-        ))
+    
+    unique_months = filtered_df["Month"].unique()
+    for month in unique_months:
+        month_df = filtered_df[filtered_df["Month"] == month]
+        for lang in month_df["Language"].unique():
+            lang_df = month_df[month_df["Language"] == lang]
+            for error_type, color in zip(error_types, error_colors):
+                bar_traces.append(go.Bar(
+                    name=error_type,
+                    legendgroup=error_type,  # 让相同的错误类型归为同一组
+                    showlegend=True if lang == "ZH" and month == "Sep" else False,  # 只在第一组数据中显示图例
+                    x=[f"{lang}<br>{month}"],
+                    y=lang_df[error_type],
+                    marker=dict(color=color),
+                    hoverinfo="y+name"
+                    )
+                )
+        # bar_traces.add_vline(x=5*i+4.5, line_width=1, line_dash="dash", line_color="black")
 
     line_traces = []
     for lang in filtered_df["Language"].unique():
         lang_df = filtered_df[filtered_df["Language"] == lang]
         line_traces.append(go.Scatter(
             name=f"Penalty Score ({lang})",
-            x=lang_df["Month"],
+            x=[f"{lang}<br>{m}" for m in lang_df["Month"]],
             y=lang_df["Penalty Score"],
             mode="lines+markers",
             line=dict(color=language_colors.get(lang, "black"), width=2),
@@ -609,30 +615,25 @@ def update_chart(selected_language, selected_month):
             hovertemplate="%{text}"
         ))
 
+
     fig = go.Figure(data=bar_traces + line_traces)
+    selected_lang_count = filtered_df["Language"].unique()
+    selected_month_count = filtered_df["Month"].unique()
+    vline_count = min(len(selected_lang_count),len(selected_month_count))
+    for i in range(vline_count-1) :
+        fig.add_vline(x=i*5 + 4.5, line_width=1, line_dash="dash", line_color="black")
+    # print(unique_months)
+    # print(selected_lang_count)
     fig.update_layout(
-        barmode="stack",
-        title="Error Types & Penalty Score",
-        xaxis=dict(title="Month"),
-        yaxis=dict(title="Number of Errors"),
-        legend_title="Error Types",
-        template="plotly_white",
-        autosize=True
+    barmode="stack",
+    title="Error Types & Penalty Score",
+    xaxis=dict(title="Month"),
+    yaxis=dict(title="Penalty"),
+    legend_title="Error Types",
+    template="plotly_white",
+    autosize=True,
+    height=600,
     )
-
-    # 动态设置柱子宽度
-    unique_months = filtered_df["Month"].nunique()
-    if unique_months == 1:
-        bar_width = 0.3
-    elif unique_months == 2:
-        bar_width = 0.4
-    else:
-        bar_width = None
-
-    if bar_width is not None:
-        for trace in fig.data:
-            if isinstance(trace, go.Bar):
-                trace.width = bar_width
 
     return fig
 
